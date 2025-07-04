@@ -8,8 +8,8 @@ import toast from 'react-hot-toast';
 const { FiSend, FiUser, FiClock, FiHeart, FiMessageCircle, FiTrash2, FiCornerDownRight } = FiIcons;
 
 // Custom pin icon that looks like a thumbtack/pushpin
-const PinIcon = ({ className, ...props }) => (
-  <svg className={className} {...props} viewBox="0 0 24 24" fill="currentColor">
+const PinIcon = ({ className = '', ...props }) => (
+  <svg className={className} {...props} viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
     <path d="M12 2C13.1 2 14 2.9 14 4C14 4.74 13.6 5.39 13 5.73V7H16V9H15V16L12 18L9 16V9H8V7H11V5.73C10.4 5.39 10 4.74 10 4C10 2.9 10.9 2 12 2M11 10V15.5L12 16L13 15.5V10H11Z"/>
   </svg>
 );
@@ -120,7 +120,7 @@ const MessageWall = () => {
     if (newReply.trim()) {
       const mentions = extractMentions(newReply);
       const originalMessage = messages.find(m => m.id === messageId);
-
+      
       // Find the original author for notifications
       let originalAuthor = null;
       if (originalMessage) {
@@ -190,7 +190,7 @@ const MessageWall = () => {
       localStorage.setItem('sommerhus_messages', JSON.stringify(updatedMessages));
       setNewReply('');
       setReplyingTo(null);
-
+      
       // Expand the thread to show the new reply
       setExpandedThreads(prev => new Set([...prev, messageId]));
 
@@ -214,7 +214,9 @@ const MessageWall = () => {
                 const hasLiked = likes.includes(user.id);
                 return {
                   ...reply,
-                  likes: hasLiked ? likes.filter(id => id !== user.id) : [...likes, user.id]
+                  likes: hasLiked 
+                    ? likes.filter(id => id !== user.id)
+                    : [...likes, user.id]
                 };
               } else if (reply.replies && reply.replies.length > 0) {
                 return { ...reply, replies: updateLikesInReplies(reply.replies) };
@@ -229,7 +231,9 @@ const MessageWall = () => {
           const hasLiked = likes.includes(user.id);
           return {
             ...message,
-            likes: hasLiked ? likes.filter(id => id !== user.id) : [...likes, user.id]
+            likes: hasLiked 
+              ? likes.filter(id => id !== user.id)
+              : [...likes, user.id]
           };
         }
       }
@@ -276,7 +280,7 @@ const MessageWall = () => {
     const date = new Date(dateString);
     return date.toLocaleString('da-DK', {
       day: '2-digit',
-      month: '2-digit',
+      month: '2-digit', 
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -304,12 +308,13 @@ const MessageWall = () => {
             <span className="text-xs text-gray-500">{formatTime(reply.timestamp)}</span>
           </div>
           <p className="text-sm text-gray-700 mb-3">{renderMessageContent(reply.content)}</p>
-
           <div className="flex items-center gap-4 text-sm">
             <button
               onClick={() => handleLike(messageId, true, reply.id)}
               className={`flex items-center gap-1 transition-colors ${
-                (reply.likes || []).includes(user.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                (reply.likes || []).includes(user.id) 
+                  ? 'text-red-500' 
+                  : 'text-gray-500 hover:text-red-500'
               }`}
             >
               <SafeIcon icon={FiHeart} className="w-3 h-3" />
@@ -323,7 +328,6 @@ const MessageWall = () => {
               <span>Svar</span>
             </button>
           </div>
-
           {replyingTo === `${messageId}-${reply.id}` && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
@@ -347,7 +351,6 @@ const MessageWall = () => {
             </motion.div>
           )}
         </div>
-
         {reply.replies && reply.replies.length > 0 && (
           <div className="mt-2">
             {renderReplies(reply.replies, messageId, level + 1)}
@@ -368,7 +371,6 @@ const MessageWall = () => {
     <div className="max-w-4xl mx-auto px-4 pb-8">
       <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
         <h2 className="text-2xl font-bold text-ebeltoft-dark mb-4">Beskedvæg</h2>
-        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex gap-2">
             <input
@@ -409,7 +411,7 @@ const MessageWall = () => {
                 <span className="text-sm font-medium">Fastgjort besked</span>
               </div>
             )}
-
+            
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <SafeIcon icon={FiUser} className="w-5 h-5 text-ebeltoft-blue" />
@@ -417,7 +419,6 @@ const MessageWall = () => {
                 <SafeIcon icon={FiClock} className="w-4 h-4 text-gray-400" />
                 <span className="text-sm text-gray-500">{formatTime(message.timestamp)}</span>
               </div>
-
               <div className="flex gap-2">
                 <button
                   onClick={() => togglePin(message.id)}
@@ -444,13 +445,15 @@ const MessageWall = () => {
               <button
                 onClick={() => handleLike(message.id)}
                 className={`flex items-center gap-1 transition-colors ${
-                  (message.likes || []).includes(user.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                  (message.likes || []).includes(user.id) 
+                    ? 'text-red-500' 
+                    : 'text-gray-500 hover:text-red-500'
                 }`}
               >
                 <SafeIcon icon={FiHeart} className="w-4 h-4" />
                 <span>{(message.likes || []).length}</span>
               </button>
-
+              
               <button
                 onClick={() => setReplyingTo(replyingTo === message.id ? null : message.id)}
                 className="flex items-center gap-1 text-gray-500 hover:text-ebeltoft-blue transition-colors"

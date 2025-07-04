@@ -1,35 +1,35 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
-import { useDropzone } from 'react-dropzone';
+import React,{useState,useEffect,useCallback} from 'react';
+import {motion} from 'framer-motion';
+import {useDropzone} from 'react-dropzone';
 import SafeIcon from '../../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
-const { FiImage, FiTrash2, FiEye } = FiIcons;
+const {FiImage,FiTrash2,FiEye}=FiIcons;
 
-const BackgroundSettings = () => {
-  const [backgroundImages, setBackgroundImages] = useState({});
-  const [previewTab, setPreviewTab] = useState(null);
+const BackgroundSettings=()=> {
+  const [backgroundImages,setBackgroundImages]=useState({});
+  const [previewTab,setPreviewTab]=useState(null);
 
-  const tabs = [
-    { id: 'beskedvaeg', label: 'Beskedvæg' },
-    { id: 'kalender', label: 'Kalender' },
-    { id: 'tjekliste', label: 'Tjekliste' },
-    { id: 'kontakt', label: 'Kontakter' },
-    { id: 'fotoalbum', label: 'Fotoalbum' },
-    { id: 'blog', label: 'Nedlukning/Opstart' },
+  const tabs=[
+    {id: 'beskedvaeg',label: 'Beskedvæg'},
+    {id: 'kalender',label: 'Kalender'},
+    {id: 'tjekliste',label: 'Tjekliste'},
+    {id: 'kontakt',label: 'Kontakter'},
+    {id: 'fotoalbum',label: 'Fotoalbum'},
+    {id: 'guides',label: 'Guides'},
   ];
 
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('sommerhus_background_images') || '{}');
+  useEffect(()=> {
+    const stored=JSON.parse(localStorage.getItem('sommerhus_background_images') || '{}');
     setBackgroundImages(stored);
-  }, []);
+  },[]);
 
-  const handleDrop = useCallback((tabId) => {
-    return (acceptedFiles) => {
-      const file = acceptedFiles[0];
+  const handleDrop=useCallback((tabId)=> {
+    return (acceptedFiles)=> {
+      const file=acceptedFiles[0];
       if (file) {
-        if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        if (file.size > 10 * 1024 * 1024) {// 10MB limit
           toast.error('Billedet er for stort. Maksimum 10MB.');
           return;
         }
@@ -39,27 +39,27 @@ const BackgroundSettings = () => {
           return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          const newBackgrounds = {
+        const reader=new FileReader();
+        reader.onload=(e)=> {
+          const newBackgrounds={
             ...backgroundImages,
             [tabId]: e.target.result
           };
           setBackgroundImages(newBackgrounds);
-          localStorage.setItem('sommerhus_background_images', JSON.stringify(newBackgrounds));
-          toast.success(`Baggrund opdateret for ${tabs.find(t => t.id === tabId)?.label}`);
+          localStorage.setItem('sommerhus_background_images',JSON.stringify(newBackgrounds));
+          toast.success(`Baggrund opdateret for ${tabs.find(t=> t.id===tabId)?.label}`);
         };
         reader.readAsDataURL(file);
       }
     };
-  }, [backgroundImages, tabs]);
+  },[backgroundImages,tabs]);
 
-  const removeBackground = (tabId) => {
-    const newBackgrounds = { ...backgroundImages };
+  const removeBackground=(tabId)=> {
+    const newBackgrounds={...backgroundImages};
     delete newBackgrounds[tabId];
     setBackgroundImages(newBackgrounds);
-    localStorage.setItem('sommerhus_background_images', JSON.stringify(newBackgrounds));
-    toast.success(`Baggrund fjernet for ${tabs.find(t => t.id === tabId)?.label}`);
+    localStorage.setItem('sommerhus_background_images',JSON.stringify(newBackgrounds));
+    toast.success(`Baggrund fjernet for ${tabs.find(t=> t.id===tabId)?.label}`);
   };
 
   return (
@@ -71,22 +71,22 @@ const BackgroundSettings = () => {
         </p>
 
         <div className="space-y-6">
-          {tabs.map((tab) => {
-            const TabDropzone = ({ children }) => {
-              const { getRootProps, getInputProps, isDragActive } = useDropzone({
+          {tabs.map((tab)=> {
+            const TabDropzone=({children})=> {
+              const {getRootProps,getInputProps,isDragActive}=useDropzone({
                 onDrop: handleDrop(tab.id),
-                accept: {
-                  'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp']
-                },
+                accept: {'image/*': ['.jpeg','.jpg','.png','.gif','.webp']},
                 maxSize: 10 * 1024 * 1024,
                 multiple: false
               });
 
               return (
-                <div 
-                  {...getRootProps()} 
+                <div
+                  {...getRootProps()}
                   className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                    isDragActive ? 'border-ebeltoft-blue bg-blue-50' : 'border-gray-300 hover:border-ebeltoft-blue'
+                    isDragActive
+                      ? 'border-ebeltoft-blue bg-blue-50'
+                      : 'border-gray-300 hover:border-ebeltoft-blue'
                   }`}
                 >
                   <input {...getInputProps()} />
@@ -95,7 +95,7 @@ const BackgroundSettings = () => {
               );
             };
 
-            const hasBackground = backgroundImages[tab.id];
+            const hasBackground=backgroundImages[tab.id];
 
             return (
               <div key={tab.id} className="border border-gray-200 rounded-xl p-6">
@@ -105,14 +105,14 @@ const BackgroundSettings = () => {
                     {hasBackground && (
                       <>
                         <button
-                          onClick={() => setPreviewTab(previewTab === tab.id ? null : tab.id)}
+                          onClick={()=> setPreviewTab(previewTab===tab.id ? null : tab.id)}
                           className="px-3 py-1 bg-ebeltoft-blue text-white rounded-lg hover:bg-ebeltoft-dark transition-colors text-sm flex items-center gap-1"
                         >
                           <SafeIcon icon={FiEye} className="w-4 h-4" />
-                          {previewTab === tab.id ? 'Skjul' : 'Vis'}
+                          {previewTab===tab.id ? 'Skjul' : 'Vis'}
                         </button>
                         <button
-                          onClick={() => removeBackground(tab.id)}
+                          onClick={()=> removeBackground(tab.id)}
                           className="px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm flex items-center gap-1"
                         >
                           <SafeIcon icon={FiTrash2} className="w-4 h-4" />
@@ -127,8 +127,8 @@ const BackgroundSettings = () => {
                   {hasBackground ? (
                     <div className="space-y-2">
                       <div className="w-20 h-20 mx-auto rounded-lg bg-gray-100 overflow-hidden">
-                        <img 
-                          src={backgroundImages[tab.id]} 
+                        <img
+                          src={backgroundImages[tab.id]}
                           alt={`${tab.label} baggrund`}
                           className="w-full h-full object-cover"
                         />
@@ -142,27 +142,27 @@ const BackgroundSettings = () => {
                     <>
                       <SafeIcon icon={FiImage} className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <p className="text-gray-600">
-                        Træk og slip billede her, eller klik for at vælge
+                        Træk og slip billede her,eller klik for at vælge
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        JPG, PNG, GIF, WebP (max 10MB)
+                        JPG,PNG,GIF,WebP (max 10MB)
                       </p>
                     </>
                   )}
                 </TabDropzone>
 
                 {/* Preview */}
-                {previewTab === tab.id && hasBackground && (
+                {previewTab===tab.id && hasBackground && (
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
+                    initial={{opacity: 0,height: 0}}
+                    animate={{opacity: 1,height: 'auto'}}
+                    exit={{opacity: 0,height: 0}}
                     className="mt-4 p-4 border border-gray-200 rounded-lg"
                   >
                     <p className="text-sm text-gray-600 mb-2">Forhåndsvisning:</p>
-                    <div 
+                    <div
                       className="w-full h-32 rounded-lg bg-cover bg-center bg-no-repeat"
-                      style={{ backgroundImage: `url(${backgroundImages[tab.id]})` }}
+                      style={{backgroundImage: `url(${backgroundImages[tab.id]})`}}
                     >
                       <div className="w-full h-full bg-white/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
                         <p className="text-gray-700 font-medium">Eksempel på indhold med baggrund</p>
