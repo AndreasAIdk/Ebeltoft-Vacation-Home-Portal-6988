@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react'
-import { Toaster } from 'react-hot-toast'
-import { motion } from 'framer-motion'
-import { AuthProvider, useAuth } from './contexts/AuthContext'
+import React, {useState, useEffect} from 'react'
+import {Toaster} from 'react-hot-toast'
+import {motion} from 'framer-motion'
+import {AuthProvider, useAuth} from './contexts/AuthContext'
 import LoginForm from './components/Auth/LoginForm'
 import Navigation from './components/Navigation'
-import CheckInOutManager from './components/CheckInOut/CheckInOutManager'
 import MessageWall from './components/MessageWall/MessageWall'
 import Checklist from './components/Checklist/Checklist'
 import CalendarView from './components/Calendar/CalendarView'
@@ -16,15 +15,14 @@ import AdminPanel from './components/Admin/AdminPanel'
 import './App.css'
 
 const AppContent = () => {
-  const { user, loading } = useAuth()
-  const [activeTab, setActiveTab] = useState('checkin')
+  const {user, loading} = useAuth()
+  const [activeTab, setActiveTab] = useState('beskedvaeg')
   const [heroImage, setHeroImage] = useState('')
 
   // Update hero image when component mounts and when localStorage changes
   useEffect(() => {
     const updateHeroImage = () => {
-      const storedHeroImage = localStorage.getItem('sommerhus_hero_image') || 
-        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&h=800&fit=crop'
+      const storedHeroImage = localStorage.getItem('sommerhus_hero_image') || 'https://quest-media-storage-bucket.s3.us-east-2.amazonaws.com/1751639393931-blob'
       setHeroImage(storedHeroImage)
     }
 
@@ -68,8 +66,6 @@ const AppContent = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'checkin':
-        return <CheckInOutManager />
       case 'beskedvaeg':
         return <MessageWall />
       case 'kalender':
@@ -87,32 +83,16 @@ const AppContent = () => {
       case 'admin':
         return <AdminPanel />
       default:
-        return <CheckInOutManager />
+        return <MessageWall />
     }
   }
 
-  // Get background image for current tab
-  const backgroundImages = JSON.parse(localStorage.getItem('sommerhus_background_images') || '{}')
-  const backgroundImage = backgroundImages[activeTab]
-
   return (
-    <div 
-      className="min-h-screen bg-gradient-to-br from-ebeltoft-light to-blue-50"
-      style={backgroundImage ? {
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      } : {}}
-    >
-      {backgroundImage && (
-        <div className="fixed inset-0 bg-white/70 backdrop-blur-sm"></div>
-      )}
-      
-      <div className="container mx-auto px-4 py-8 relative z-10">
+    <div className="min-h-screen bg-gradient-to-br from-ebeltoft-light to-blue-50">
+      <div className="container mx-auto px-4 py-8">
         <motion.header
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{opacity: 0, y: -20}}
+          animate={{opacity: 1, y: 0}}
           className="text-center mb-8 relative"
         >
           {/* Header with background image and white box */}
@@ -132,7 +112,7 @@ const AppContent = () => {
                   Sommerhus i Ebeltoft
                 </h1>
                 <p className="text-gray-600 text-lg">
-                  Velkommen, {user.fullName}!
+                  Velkommen, {user.username}!
                 </p>
               </div>
             </div>
@@ -143,9 +123,9 @@ const AppContent = () => {
 
         <motion.main
           key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          initial={{opacity: 0, y: 20}}
+          animate={{opacity: 1, y: 0}}
+          transition={{duration: 0.3}}
           className="mt-8"
         >
           {renderContent()}

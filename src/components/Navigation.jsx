@@ -1,29 +1,28 @@
 import React from 'react'
-import { motion } from 'framer-motion'
-import { useAuth } from '../contexts/AuthContext'
+import {motion} from 'framer-motion'
+import {useAuth} from '../contexts/AuthContext'
 import SafeIcon from '../common/SafeIcon'
 import NotificationCenter from './Notifications/NotificationCenter'
 import * as FiIcons from 'react-icons/fi'
 
-const { FiMessageCircle, FiCalendar, FiCheckSquare, FiUsers, FiCamera, FiBook, FiSettings, FiShield, FiLogIn, FiLogOut } = FiIcons
+const {FiMessageCircle,FiCalendar,FiCheckSquare,FiUsers,FiCamera,FiBook,FiSettings,FiShield} = FiIcons
 
-const Navigation = ({ activeTab, setActiveTab }) => {
-  const { user } = useAuth()
+const Navigation = ({activeTab, setActiveTab}) => {
+  const {user} = useAuth()
 
   const tabs = [
-    { id: 'checkin', label: 'Check-in/ud', icon: FiLogIn },
-    { id: 'beskedvaeg', label: 'Beskedvæg', icon: FiMessageCircle },
-    { id: 'kalender', label: 'Kalender', icon: FiCalendar },
-    { id: 'tjekliste', label: 'Tjekliste', icon: FiCheckSquare },
-    { id: 'kontakt', label: 'Kontakter', icon: FiUsers },
-    { id: 'fotoalbum', label: 'Fotoalbum', icon: FiCamera },
-    { id: 'blog', label: 'Nedlukning/Opstart', icon: FiBook },
-    { id: 'indstillinger', label: 'Indstillinger', icon: FiSettings },
+    {id: 'beskedvaeg', label: 'Beskedvæg', icon: FiMessageCircle},
+    {id: 'kalender', label: 'Kalender', icon: FiCalendar},
+    {id: 'tjekliste', label: 'Tjekliste', icon: FiCheckSquare},
+    {id: 'kontakt', label: 'Kontakter', icon: FiUsers},
+    {id: 'fotoalbum', label: 'Fotoalbum', icon: FiCamera},
+    {id: 'blog', label: 'Nedlukning/Opstart', icon: FiBook},
+    {id: 'indstillinger', label: 'Indstillinger', icon: FiSettings},
   ]
 
   // Add admin tab if user is admin
   if (user?.isAdmin) {
-    tabs.push({ id: 'admin', label: 'Admin', icon: FiShield })
+    tabs.push({id: 'admin', label: 'Admin', icon: FiShield})
   }
 
   return (
@@ -41,8 +40,8 @@ const Navigation = ({ activeTab, setActiveTab }) => {
                     : 'bg-ebeltoft-blue text-white shadow-md'
                   : 'text-gray-600 hover:bg-ebeltoft-light hover:text-ebeltoft-dark'
               }`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{scale: 1.05}}
+              whileTap={{scale: 0.95}}
             >
               <SafeIcon icon={tab.icon} className="w-4 h-4" />
               <span className="hidden sm:inline">{tab.label}</span>

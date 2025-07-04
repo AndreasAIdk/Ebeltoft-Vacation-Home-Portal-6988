@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDropzone } from 'react-dropzone';
+import React, {useState, useEffect} from 'react';
+import {motion} from 'framer-motion';
+import {useAuth} from '../../contexts/AuthContext';
+import {useDropzone} from 'react-dropzone';
 import SafeIcon from '../../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 import ColorPicker from './ColorPicker';
-import BackgroundSettings from './BackgroundSettings';
 import toast from 'react-hot-toast';
 
-const { FiSettings, FiPlus, FiTrash2, FiLogOut, FiImage, FiBell, FiBellOff, FiUpload, FiCamera } = FiIcons;
+const {FiSettings, FiPlus, FiTrash2, FiLogOut, FiImage, FiBell, FiBellOff, FiUpload, FiCamera} = FiIcons;
 
 const Settings = () => {
-  const { user, updateUser, logout } = useAuth();
+  const {user, updateUser, logout} = useAuth();
   const [checklistItems, setChecklistItems] = useState([]);
   const [newItem, setNewItem] = useState('');
   const [newCategory, setNewCategory] = useState('rengøring');
@@ -20,23 +19,23 @@ const Settings = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   const categories = {
-    vand: { name: 'Vand', color: 'bg-blue-100 text-blue-800' },
-    strøm: { name: 'Strøm', color: 'bg-yellow-100 text-yellow-800' },
-    rengøring: { name: 'Rengøring', color: 'bg-green-100 text-green-800' },
-    sikkerhed: { name: 'Sikkerhed', color: 'bg-red-100 text-red-800' },
+    vand: {name: 'Vand', color: 'bg-blue-100 text-blue-800'},
+    strøm: {name: 'Strøm', color: 'bg-yellow-100 text-yellow-800'},
+    rengøring: {name: 'Rengøring', color: 'bg-green-100 text-green-800'},
+    sikkerhed: {name: 'Sikkerhed', color: 'bg-red-100 text-red-800'},
   };
 
   useEffect(() => {
     const storedChecklist = JSON.parse(localStorage.getItem('sommerhus_checklist') || '[]');
     if (storedChecklist.length === 0) {
       const defaultItems = [
-        { id: 1, text: 'Luk hovedvandhanerne under køkkenvask og badeværelse', completed: false, category: 'vand' },
-        { id: 2, text: 'Sluk for alle elektriske apparater', completed: false, category: 'strøm' },
-        { id: 3, text: 'Tøm køleskab for letfordærvelige varer', completed: false, category: 'rengøring' },
-        { id: 4, text: 'Støvsug alle rum', completed: false, category: 'rengøring' },
-        { id: 5, text: 'Vask køkken og badeværelse', completed: false, category: 'rengøring' },
-        { id: 6, text: 'Tøm skraldespande', completed: false, category: 'rengøring' },
-        { id: 7, text: 'Lås alle døre og vinduer', completed: false, category: 'sikkerhed' },
+        {id: 1, text: 'Luk hovedvandhanerne under køkkenvask og badeværelse', completed: false, category: 'vand'},
+        {id: 2, text: 'Sluk for alle elektriske apparater', completed: false, category: 'strøm'},
+        {id: 3, text: 'Tøm køleskab for letfordærvelige varer', completed: false, category: 'rengøring'},
+        {id: 4, text: 'Støvsug alle rum', completed: false, category: 'rengøring'},
+        {id: 5, text: 'Vask køkken og badeværelse', completed: false, category: 'rengøring'},
+        {id: 6, text: 'Tøm skraldespande', completed: false, category: 'rengøring'},
+        {id: 7, text: 'Lås alle døre og vinduer', completed: false, category: 'sikkerhed'},
       ];
       setChecklistItems(defaultItems);
       localStorage.setItem('sommerhus_checklist', JSON.stringify(defaultItems));
@@ -45,7 +44,7 @@ const Settings = () => {
     }
 
     const storedHeroImage = localStorage.getItem('sommerhus_hero_image');
-    const defaultHeroImage = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&h=800&fit=crop';
+    const defaultHeroImage = 'https://quest-media-storage-bucket.s3.us-east-2.amazonaws.com/1751639393931-blob';
     setHeroImage(storedHeroImage || defaultHeroImage);
   }, []);
 
@@ -61,8 +60,8 @@ const Settings = () => {
           // Target max dimensions for mobile compatibility
           const maxWidth = 1200;
           const maxHeight = 800;
-          let { width, height } = img;
-          
+          let {width, height} = img;
+
           // Calculate new dimensions maintaining aspect ratio
           if (width > height) {
             if (width > maxWidth) {
@@ -78,20 +77,20 @@ const Settings = () => {
 
           canvas.width = width;
           canvas.height = height;
-          
+
           // Draw with good quality
           ctx.drawImage(img, 0, 0, width, height);
-          
+
           // Progressive compression - start with higher quality and reduce if needed
           let quality = 0.8;
           let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-          
+
           // If too large, reduce quality
           while (compressedDataUrl.length > 800000 && quality > 0.3) { // ~800KB limit
             quality -= 0.1;
             compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
           }
-          
+
           resolve(compressedDataUrl);
         } catch (error) {
           reject(error);
@@ -118,20 +117,19 @@ const Settings = () => {
     }
 
     setIsUploading(true);
-    
+
     try {
       const compressedImage = await compressImage(file);
-      
+
       // Try to save to localStorage
       try {
         localStorage.setItem('sommerhus_hero_image', compressedImage);
         setHeroImage(compressedImage);
-        window.dispatchEvent(new CustomEvent('heroImageUpdate', { detail: compressedImage }));
+        window.dispatchEvent(new CustomEvent('heroImageUpdate', {detail: compressedImage}));
         toast.success('Forsidebillede opdateret!');
       } catch (quotaError) {
         toast.error('Billedet er for stort til at gemme lokalt. Prøv et mindre billede.');
       }
-      
     } catch (error) {
       console.error('Compression error:', error);
       toast.error('Der opstod en fejl ved behandling af billedet. Prøv igen.');
@@ -143,14 +141,14 @@ const Settings = () => {
   // Clear hero image
   const clearHeroImage = () => {
     localStorage.removeItem('sommerhus_hero_image');
-    const defaultImage = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&h=800&fit=crop';
+    const defaultImage = 'https://quest-media-storage-bucket.s3.us-east-2.amazonaws.com/1751639393931-blob';
     setHeroImage(defaultImage);
-    window.dispatchEvent(new CustomEvent('heroImageUpdate', { detail: defaultImage }));
+    window.dispatchEvent(new CustomEvent('heroImageUpdate', {detail: defaultImage}));
     toast.success('Forsidebillede nulstillet til standard');
   };
 
   // Dropzone configuration with mobile support
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({
     onDrop: (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
         handleFileUpload(acceptedFiles[0]);
@@ -190,22 +188,23 @@ const Settings = () => {
 
   const toggleNotifications = () => {
     const newValue = !user.allowNotifications;
-    updateUser({ allowNotifications: newValue });
+    updateUser({allowNotifications: newValue});
     toast.success(newValue ? 'Notifikationer aktiveret' : 'Notifikationer deaktiveret');
   };
 
   const handleColorChange = (color) => {
-    updateUser({ calendarColor: color });
+    updateUser({calendarColor: color});
     setSelectedColor(color);
 
     const bookings = JSON.parse(localStorage.getItem('sommerhus_bookings') || '[]');
     const updatedBookings = bookings.map(booking => {
       if (booking.userId === user.id) {
-        return { ...booking, userColor: color };
+        return {...booking, userColor: color};
       }
       return booking;
     });
     localStorage.setItem('sommerhus_bookings', JSON.stringify(updatedBookings));
+
     toast.success('Kalenderfarve gemt!');
   };
 
@@ -225,8 +224,8 @@ const Settings = () => {
           <motion.button
             onClick={handleLogout}
             className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors flex items-center gap-2"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{scale: 1.05}}
+            whileTap={{scale: 0.95}}
           >
             <SafeIcon icon={FiLogOut} className="w-4 h-4" />
             Log ud
@@ -252,7 +251,9 @@ const Settings = () => {
               <button
                 onClick={toggleNotifications}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-colors w-full ${
-                  user.allowNotifications ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-700'
+                  user.allowNotifications
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-gray-50 text-gray-700'
                 }`}
               >
                 <SafeIcon icon={user.allowNotifications ? FiBell : FiBellOff} className="w-5 h-5" />
@@ -283,7 +284,7 @@ const Settings = () => {
             <div className="mt-3 p-3 bg-white rounded-lg border">
               <div className="text-xs text-gray-600 mb-2">Forhåndsvisning i kalender:</div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded" style={{ backgroundColor: selectedColor }}></div>
+                <div className="w-4 h-4 rounded" style={{backgroundColor: selectedColor}}></div>
                 <span className="text-sm text-gray-700">{user.fullName}</span>
               </div>
             </div>
@@ -310,20 +311,22 @@ const Settings = () => {
                 alt="Forsidebillede"
                 className="w-full h-32 object-cover rounded border"
                 onError={(e) => {
-                  e.target.src = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&h=800&fit=crop';
+                  e.target.src = 'https://quest-media-storage-bucket.s3.us-east-2.amazonaws.com/1751639393931-blob';
                 }}
               />
             </div>
           )}
-          
+
           {/* Enhanced upload area */}
           <div>
-            <div 
+            <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                isDragActive ? 'border-ebeltoft-blue bg-blue-50' : 
-                isUploading ? 'border-gray-300 bg-gray-50 cursor-not-allowed' : 
-                'border-gray-300 hover:border-ebeltoft-blue hover:bg-ebeltoft-light'
+                isDragActive
+                  ? 'border-ebeltoft-blue bg-blue-50'
+                  : isUploading
+                  ? 'border-gray-300 bg-gray-50 cursor-not-allowed'
+                  : 'border-gray-300 hover:border-ebeltoft-blue hover:bg-ebeltoft-light'
               }`}
             >
               <input {...getInputProps()} />
@@ -338,14 +341,14 @@ const Settings = () => {
                     </div>
                   )}
                 </div>
-                
                 <div>
                   <p className="text-lg text-gray-700 font-medium">
-                    {isUploading ? 'Behandler billede...' :
-                     isDragActive ? 'Slip billedet her...' : 
-                     'Upload forsidebillede'}
+                    {isUploading
+                      ? 'Behandler billede...'
+                      : isDragActive
+                      ? 'Slip billedet her...'
+                      : 'Upload forsidebillede'}
                   </p>
-                  
                   {!isUploading && (
                     <>
                       <p className="text-sm text-gray-600 mt-2">
@@ -357,7 +360,6 @@ const Settings = () => {
                     </>
                   )}
                 </div>
-                
                 {!isUploading && (
                   <div className="text-xs text-gray-500">
                     <p>Understøttede formater: JPG, PNG, GIF, WebP, HEIC</p>
@@ -369,9 +371,6 @@ const Settings = () => {
             </div>
           </div>
         </div>
-
-        {/* Background Settings Section */}
-        <BackgroundSettings />
       </div>
 
       <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -399,8 +398,8 @@ const Settings = () => {
             <motion.button
               onClick={addChecklistItem}
               className="px-6 py-2 bg-ebeltoft-blue text-white rounded-lg hover:bg-ebeltoft-dark transition-colors flex items-center gap-2"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{scale: 1.05}}
+              whileTap={{scale: 0.95}}
             >
               <SafeIcon icon={FiPlus} className="w-5 h-5" />
               Tilføj
@@ -413,8 +412,8 @@ const Settings = () => {
           {checklistItems.map(item => (
             <motion.div
               key={item.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{opacity: 0, y: 10}}
+              animate={{opacity: 1, y: 0}}
               className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
             >
               <div className="flex items-center gap-3">

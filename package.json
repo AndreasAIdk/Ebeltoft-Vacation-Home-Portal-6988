@@ -1,14 +1,16 @@
 {
   "name": "sommerhus-i-ebeltoft",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "npm run lint && vite build",
     "lint": "eslint .",
     "lint:error": "eslint . --quiet",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "vercel --prod",
+    "deploy:force": "vercel --prod --force"
   },
   "dependencies": {
     "@questlabs/react-sdk": "^2.1.9",
