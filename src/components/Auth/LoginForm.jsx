@@ -5,16 +5,18 @@ import SafeIcon from '../../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
-const {FiUser, FiLock, FiLogIn, FiUserPlus, FiPhone, FiBell, FiBellOff} = FiIcons;
+const {FiUser, FiLock, FiLogIn, FiUserPlus, FiPhone, FiMail, FiShield} = FiIcons;
 
 const LoginForm = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isSuperUser, setIsSuperUser] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
     fullName: '',
     phoneNumber: '',
-    allowNotifications: false
+    email: '',
+    superUserCode: ''
   });
   const [loading, setLoading] = useState(false);
   const [heroImage, setHeroImage] = useState('');
@@ -45,8 +47,14 @@ const LoginForm = () => {
           return;
         }
 
-        if (!formData.phoneNumber) {
-          toast.error('Mobilnummer er påkrævet for notifikationer');
+        if (!formData.phoneNumber || !formData.email) {
+          toast.error('Mobilnummer og email er påkrævet');
+          return;
+        }
+
+        // Check super user code if attempting super user registration
+        if (isSuperUser && formData.superUserCode !== 'superbruger007') {
+          toast.error('Forkert superbruger kode');
           return;
         }
 
@@ -55,11 +63,15 @@ const LoginForm = () => {
           formData.password,
           formData.fullName,
           formData.phoneNumber,
-          formData.allowNotifications
+          formData.email,
+          isSuperUser
         );
 
         if (result.success) {
-          toast.success('Konto oprettet og tilføjet til kontakter!');
+          toast.success('Konto oprettet! Husk at notere dit kodeord ned - det sendes ikke på email.');
+          if (isSuperUser) {
+            toast.success('Superbruger konto oprettet med udvidede rettigheder!');
+          }
         } else {
           toast.error(result.error);
         }
@@ -72,21 +84,15 @@ const LoginForm = () => {
   };
 
   const handleChange = (e) => {
-    const {name, value, type, checked} = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === 'checkbox' ? checked : value
-    });
+    const {name, value} = e.target;
+    setFormData({...formData, [name]: value});
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-ebeltoft-light to-blue-50 flex items-center justify-center p-4">
       {/* Hero Background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center opacity-20"
-        style={{backgroundImage: `url(${heroImage})`}}
-      />
-
+      <div className="absolute inset-0 bg-cover bg-center opacity-20" style={{backgroundImage: `url(${heroImage})`}} />
+      
       <div className="flex flex-col lg:flex-row gap-6 w-full max-w-4xl relative z-10">
         {/* Info Box */}
         <motion.div
@@ -99,9 +105,7 @@ const LoginForm = () => {
           </h1>
           <div className="space-y-4 text-gray-700 leading-relaxed">
             <p>
-              Her kan du se, om sommerhuset er ledigt, vi kan skrive beskeder til hinanden, 
-              dele billeder og læse opslag om, hvordan man nedlukker og starter sommerhuset 
-              op til en ny sæson.
+              Her kan du se, om sommerhuset er ledigt, vi kan skrive beskeder til hinanden, dele billeder og læse opslag om, hvordan man nedlukker og starter sommerhuset op til en ny sæson.
             </p>
             <p>
               Hvis det er dit første besøg, så start med at oprette dig som bruger.
@@ -147,6 +151,24 @@ const LoginForm = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <div className="relative">
+                    <SafeIcon icon={FiMail} className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required={!isLogin}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ebeltoft-blue focus:border-transparent"
+                      placeholder="din@email.com"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Mobilnummer
                   </label>
                   <div className="relative">
@@ -161,38 +183,54 @@ const LoginForm = () => {
                       placeholder="+45 12 34 56 78"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Påkrævet for at modtage notifikationer ved tagning
-                  </p>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                  <SafeIcon icon={formData.allowNotifications ? FiBell : FiBellOff} className="w-5 h-5 text-ebeltoft-blue" />
+                <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
+                  <SafeIcon icon={FiShield} className="w-5 h-5 text-red-600" />
                   <div className="flex-1">
                     <label className="flex items-center cursor-pointer">
                       <input
                         type="checkbox"
-                        name="allowNotifications"
-                        checked={formData.allowNotifications}
-                        onChange={handleChange}
+                        checked={isSuperUser}
+                        onChange={(e) => setIsSuperUser(e.target.checked)}
                         className="sr-only"
                       />
-                      <div className={`w-5 h-5 rounded border-2 mr-2 flex items-center justify-center ${formData.allowNotifications ? 'bg-ebeltoft-blue border-ebeltoft-blue' : 'border-gray-300'}`}>
-                        {formData.allowNotifications && (
-                          <SafeIcon icon={FiUser} className="w-3 h-3 text-white" />
+                      <div className={`w-5 h-5 rounded border-2 mr-2 flex items-center justify-center ${isSuperUser ? 'bg-red-600 border-red-600' : 'border-gray-300'}`}>
+                        {isSuperUser && (
+                          <SafeIcon icon={FiShield} className="w-3 h-3 text-white" />
                         )}
                       </div>
                       <div>
                         <span className="text-sm font-medium text-gray-800">
-                          Tillad notifikationer
+                          Opret som superbruger
                         </span>
                         <p className="text-xs text-gray-600">
-                          Modtag besked når du bliver tagget (@dit_navn)
+                          Kræver hemmeligt kodeord
                         </p>
                       </div>
                     </label>
                   </div>
                 </div>
+
+                {isSuperUser && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Superbruger kode
+                    </label>
+                    <div className="relative">
+                      <SafeIcon icon={FiShield} className="absolute left-3 top-3 w-5 h-5 text-red-400" />
+                      <input
+                        type="password"
+                        name="superUserCode"
+                        value={formData.superUserCode}
+                        onChange={handleChange}
+                        required={isSuperUser}
+                        className="w-full pl-10 pr-4 py-2 border border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        placeholder="Indtast hemmeligt kodeord"
+                      />
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
@@ -232,6 +270,14 @@ const LoginForm = () => {
               </div>
             </div>
 
+            {!isLogin && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ <strong>Vigtigt:</strong> Noter dit kodeord ned! Det sendes ikke på email.
+                </p>
+              </div>
+            )}
+
             <motion.button
               type="submit"
               disabled={loading}
@@ -249,9 +295,7 @@ const LoginForm = () => {
               onClick={() => setIsLogin(!isLogin)}
               className="text-ebeltoft-blue hover:text-ebeltoft-dark transition-colors"
             >
-              {isLogin
-                ? 'Har du ikke en konto? Opret en her'
-                : 'Har du allerede en konto? Log ind'}
+              {isLogin ? 'Har du ikke en konto? Opret en her' : 'Har du allerede en konto? Log ind'}
             </button>
           </div>
         </motion.div>

@@ -1,65 +1,57 @@
-import React,{useState,useEffect} from 'react'
-import {Toaster} from 'react-hot-toast'
-import {motion} from 'framer-motion'
-import {AuthProvider,useAuth} from './contexts/AuthContext'
+import React, { useState, useEffect } from 'react'
+import { Toaster } from 'react-hot-toast'
+import { motion } from 'framer-motion'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import LoginForm from './components/Auth/LoginForm'
 import Navigation from './components/Navigation'
 import MessageWall from './components/MessageWall/MessageWall'
 import Checklist from './components/Checklist/Checklist'
-import CalendarView from './components/Calendar/CalendarView'
+import SupabaseFirstCalendar from './components/Calendar/SupabaseFirstCalendar'
 import Contacts from './components/Contacts/Contacts'
-import PhotoAlbum from './components/PhotoAlbum/PhotoAlbum'
+import BulletproofPhotoAlbum from './components/PhotoAlbum/BulletproofPhotoAlbum'
 import Guides from './components/Guides/Guides'
 import Settings from './components/Settings/Settings'
 import AdminPanel from './components/Admin/AdminPanel'
 import './App.css'
 
-const AppContent=()=> {
-  const {user,loading}=useAuth()
-  const [activeTab,setActiveTab]=useState('beskedvaeg')
-  const [heroImage,setHeroImage]=useState('')
+const AppContent = () => {
+  const { user, loading } = useAuth()
+  const [activeTab, setActiveTab] = useState('beskedvaeg')
+  const [heroImage, setHeroImage] = useState('')
 
-  // Force cache bust with timestamp
-  useEffect(()=> {
-    console.log('🚀 App version 1.0.0 - Guides Update')
-    console.log('Build time:', new Date().toISOString())
-    console.log('Environment:',import.meta.env.MODE)
-    console.log('Base URL:',import.meta.env.BASE_URL)
-  },[])
-
-  useEffect(()=> {
-    const updateHeroImage=()=> {
-      const storedHeroImage=localStorage.getItem('sommerhus_hero_image') || 'https://quest-media-storage-bucket.s3.us-east-2.amazonaws.com/1751639393931-blob'
+  useEffect(() => {
+    const updateHeroImage = () => {
+      const storedHeroImage = localStorage.getItem('sommerhus_hero_image') || 'https://quest-media-storage-bucket.s3.us-east-2.amazonaws.com/1751639393931-blob'
       setHeroImage(storedHeroImage)
     }
 
     updateHeroImage()
 
-    const handleStorageChange=(e)=> {
-      if (e.key==='sommerhus_hero_image') {
+    const handleStorageChange = (e) => {
+      if (e.key === 'sommerhus_hero_image') {
         updateHeroImage()
       }
     }
 
-    const handleHeroImageUpdate=(e)=> {
+    const handleHeroImageUpdate = (e) => {
       updateHeroImage()
     }
 
-    window.addEventListener('storage',handleStorageChange)
-    window.addEventListener('heroImageUpdate',handleHeroImageUpdate)
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('heroImageUpdate', handleHeroImageUpdate)
 
-    return ()=> {
-      window.removeEventListener('storage',handleStorageChange)
-      window.removeEventListener('heroImageUpdate',handleHeroImageUpdate)
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('heroImageUpdate', handleHeroImageUpdate)
     }
-  },[])
+  }, [])
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-ebeltoft-light to-blue-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ebeltoft-blue mx-auto mb-4"></div>
-          <p className="text-gray-600">Indlæser Guides version...</p>
+          <p className="text-gray-600">Indlæser...</p>
         </div>
       </div>
     )
@@ -69,18 +61,18 @@ const AppContent=()=> {
     return <LoginForm />
   }
 
-  const renderContent=()=> {
+  const renderContent = () => {
     switch (activeTab) {
       case 'beskedvaeg':
         return <MessageWall />
       case 'kalender':
-        return <CalendarView />
+        return <SupabaseFirstCalendar />
       case 'tjekliste':
         return <Checklist />
       case 'kontakt':
         return <Contacts />
       case 'fotoalbum':
-        return <PhotoAlbum />
+        return <BulletproofPhotoAlbum />
       case 'guides':
         return <Guides />
       case 'indstillinger':
@@ -96,8 +88,8 @@ const AppContent=()=> {
     <div className="min-h-screen bg-gradient-to-br from-ebeltoft-light to-blue-50">
       <div className="container mx-auto px-4 py-8">
         <motion.header
-          initial={{opacity: 0,y: -20}}
-          animate={{opacity: 1,y: 0}}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8 relative"
         >
           <div
@@ -115,12 +107,9 @@ const AppContent=()=> {
                 <h1 className="text-4xl md:text-6xl font-bold text-ebeltoft-dark mb-4">
                   Sommerhus i Ebeltoft
                 </h1>
-                <p className="text-gray-700 text-xl font-medium mb-2">
-                  Velkommen,{user.fullName || user.username}! 👋
+                <p className="text-gray-700 text-xl font-medium">
+                  Velkommen, {user.fullName}! 👋
                 </p>
-                <div className="text-gray-600">
-                  Din families digitale sommerhus-hub v1.0.0
-                </div>
               </div>
             </div>
           </div>
@@ -130,9 +119,9 @@ const AppContent=()=> {
 
         <motion.main
           key={activeTab}
-          initial={{opacity: 0,y: 20}}
-          animate={{opacity: 1,y: 0}}
-          transition={{duration: 0.3}}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
           className="mt-8"
         >
           {renderContent()}
@@ -143,23 +132,21 @@ const AppContent=()=> {
 }
 
 function App() {
-  // Error boundary for debugging
-  const [hasError,setHasError]=useState(false)
+  const [hasError, setHasError] = useState(false)
 
-  useEffect(()=> {
-    const handleError=(error)=> {
-      console.error('🚨 App Error:',error)
+  useEffect(() => {
+    const handleError = (error) => {
       setHasError(true)
     }
 
-    window.addEventListener('error',handleError)
-    window.addEventListener('unhandledrejection',handleError)
+    window.addEventListener('error', handleError)
+    window.addEventListener('unhandledrejection', handleError)
 
-    return ()=> {
-      window.removeEventListener('error',handleError)
-      window.removeEventListener('unhandledrejection',handleError)
+    return () => {
+      window.removeEventListener('error', handleError)
+      window.removeEventListener('unhandledrejection', handleError)
     }
-  },[])
+  }, [])
 
   if (hasError) {
     return (
@@ -168,7 +155,7 @@ function App() {
           <h1 className="text-2xl font-bold text-red-800 mb-4">Der opstod en fejl</h1>
           <p className="text-red-600 mb-4">Prøv at genindlæse siden</p>
           <button
-            onClick={()=> window.location.reload()}
+            onClick={() => window.location.reload()}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
           >
             Genindlæs

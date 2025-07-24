@@ -10,17 +10,8 @@ if (SUPABASE_URL === 'https://<PROJECT-ID>.supabase.co' || SUPABASE_ANON_KEY ===
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: false
+    autoRefreshToken: true
   }
 })
-
-// Test connection
-supabase
-  .from('users_sommerhus_2024')
-  .select('count')
-  .limit(1)
-  .then(() => console.log('✅ Supabase: Connected successfully'))
-  .catch((error) => console.error('❌ Supabase connection error:', error))
 
 export default supabase

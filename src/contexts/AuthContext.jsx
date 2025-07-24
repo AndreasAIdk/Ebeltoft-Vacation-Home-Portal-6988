@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import React, {createContext, useContext, useState, useEffect} from 'react'
+import {supabase} from '../lib/supabase'
 
 const AuthContext = createContext()
 
@@ -11,7 +11,7 @@ export const useAuth = () => {
   return context
 }
 
-export const AuthProvider = ({ children }) => {
+export const AuthProvider = ({children}) => {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (username, password) => {
     try {
       // Try Supabase first
-      const { data: users, error } = await supabase
+      const {data: users, error} = await supabase
         .from('users_sommerhus_2024')
         .select('*')
         .eq('username', username)
@@ -39,75 +39,76 @@ export const AuthProvider = ({ children }) => {
         const foundUser = storedUsers.find(u => u.username === username && u.password === password)
         
         if (foundUser) {
-          const userWithoutPassword = { ...foundUser }
+          const userWithoutPassword = {...foundUser}
           delete userWithoutPassword.password
           setUser(userWithoutPassword)
           localStorage.setItem('sommerhus_user', JSON.stringify(userWithoutPassword))
-          return { success: true }
+          return {success: true}
         }
-        
-        return { success: false, error: 'Forkert brugernavn eller adgangskode' }
+        return {success: false, error: 'Forkert brugernavn eller adgangskode'}
       }
 
       // Simple password check (in production, use proper hashing)
       if (users && username === users.username) {
-        const userWithoutPassword = { 
+        const userWithoutPassword = {
           id: users.id,
           username: users.username,
           fullName: users.full_name,
           phoneNumber: users.phone_number,
-          allowNotifications: users.allow_notifications,
+          email: users.email,
           calendarColor: users.calendar_color,
-          isAdmin: users.is_admin
+          isAdmin: users.is_admin,
+          isSuperUser: users.is_super_user
         }
-        
+
         setUser(userWithoutPassword)
         localStorage.setItem('sommerhus_user', JSON.stringify(userWithoutPassword))
-        
+
         // Sync to localStorage for offline access
         const localUsers = JSON.parse(localStorage.getItem('sommerhus_users') || '[]')
         const existingIndex = localUsers.findIndex(u => u.id === users.id)
         if (existingIndex >= 0) {
-          localUsers[existingIndex] = { ...users, password }
+          localUsers[existingIndex] = {...users, password}
         } else {
-          localUsers.push({ ...users, password })
+          localUsers.push({...users, password})
         }
         localStorage.setItem('sommerhus_users', JSON.stringify(localUsers))
-        
-        return { success: true }
+
+        return {success: true}
       }
 
-      return { success: false, error: 'Forkert brugernavn eller adgangskode' }
+      return {success: false, error: 'Forkert brugernavn eller adgangskode'}
     } catch (error) {
       console.error('Login error:', error)
-      return { success: false, error: 'Der skete en fejl ved login' }
+      return {success: false, error: 'Der skete en fejl ved login'}
     }
   }
 
-  const register = async (username, password, fullName, phoneNumber, allowNotifications) => {
+  const register = async (username, password, fullName, phoneNumber, email, isSuperUser) => {
     try {
       // Check if username exists in Supabase
-      const { data: existingUser } = await supabase
+      const {data: existingUser} = await supabase
         .from('users_sommerhus_2024')
         .select('username')
         .eq('username', username)
         .single()
 
       if (existingUser) {
-        return { success: false, error: 'Brugernavnet er allerede i brug' }
+        return {success: false, error: 'Brugernavnet er allerede i brug'}
       }
 
       // Create new user in Supabase
       const newUserData = {
         username,
-        email: `${username}@sommerhus.local`, // Dummy email for now
+        email: email,
         full_name: fullName,
         phone_number: phoneNumber,
-        allow_notifications: allowNotifications,
-        calendar_color: '#2563eb'
+        calendar_color: '#2563eb',
+        is_admin: false,
+        is_super_user: isSuperUser
       }
 
-      const { data: newUser, error } = await supabase
+      const {data: newUser, error} = await supabase
         .from('users_sommerhus_2024')
         .insert([newUserData])
         .select()
@@ -117,9 +118,8 @@ export const AuthProvider = ({ children }) => {
         console.error('Supabase registration error:', error)
         // Fallback to localStorage
         const storedUsers = JSON.parse(localStorage.getItem('sommerhus_users') || '[]')
-        
         if (storedUsers.some(u => u.username === username)) {
-          return { success: false, error: 'Brugernavnet er allerede i brug' }
+          return {success: false, error: 'Brugernavnet er allerede i brug'}
         }
 
         const localUser = {
@@ -128,20 +128,22 @@ export const AuthProvider = ({ children }) => {
           password,
           fullName,
           phoneNumber,
-          allowNotifications,
+          email,
           calendarColor: '#2563eb',
+          isAdmin: false,
+          isSuperUser,
           createdAt: new Date().toISOString()
         }
 
         storedUsers.push(localUser)
         localStorage.setItem('sommerhus_users', JSON.stringify(storedUsers))
 
-        const userWithoutPassword = { ...localUser }
+        const userWithoutPassword = {...localUser}
         delete userWithoutPassword.password
         setUser(userWithoutPassword)
         localStorage.setItem('sommerhus_user', JSON.stringify(userWithoutPassword))
 
-        return { success: true }
+        return {success: true}
       }
 
       // Add to contacts in Supabase
@@ -150,6 +152,7 @@ export const AuthProvider = ({ children }) => {
         .insert([{
           name: fullName,
           phone: phoneNumber,
+          email: email,
           relation: 'Familie',
           created_by: newUser.id
         }])
@@ -160,6 +163,7 @@ export const AuthProvider = ({ children }) => {
         id: Date.now(),
         name: fullName,
         phone: phoneNumber,
+        email: email,
         relation: 'Familie',
         createdBy: newUser.id,
         createdAt: new Date().toISOString()
@@ -171,33 +175,34 @@ export const AuthProvider = ({ children }) => {
         username: newUser.username,
         fullName: newUser.full_name,
         phoneNumber: newUser.phone_number,
-        allowNotifications: newUser.allow_notifications,
+        email: newUser.email,
         calendarColor: newUser.calendar_color,
-        isAdmin: newUser.is_admin || false
+        isAdmin: newUser.is_admin || false,
+        isSuperUser: newUser.is_super_user || false
       }
 
       setUser(userWithoutPassword)
       localStorage.setItem('sommerhus_user', JSON.stringify(userWithoutPassword))
 
-      return { success: true }
+      return {success: true}
     } catch (error) {
       console.error('Registration error:', error)
-      return { success: false, error: 'Der skete en fejl ved oprettelse af konto' }
+      return {success: false, error: 'Der skete en fejl ved oprettelse af konto'}
     }
   }
 
   const updateUser = async (updatedData) => {
     try {
-      const updatedUser = { ...user, ...updatedData }
+      const updatedUser = {...user, ...updatedData}
       setUser(updatedUser)
       localStorage.setItem('sommerhus_user', JSON.stringify(updatedUser))
 
-      // Update in Supabase
+      // Update in Supabase if user.id exists
       if (user.id) {
         const supabaseData = {
           full_name: updatedData.fullName || user.fullName,
           phone_number: updatedData.phoneNumber || user.phoneNumber,
-          allow_notifications: updatedData.allowNotifications !== undefined ? updatedData.allowNotifications : user.allowNotifications,
+          email: updatedData.email || user.email,
           calendar_color: updatedData.calendarColor || user.calendarColor
         }
 
@@ -209,8 +214,8 @@ export const AuthProvider = ({ children }) => {
 
       // Update in localStorage
       const storedUsers = JSON.parse(localStorage.getItem('sommerhus_users') || '[]')
-      const updatedUsers = storedUsers.map(u => 
-        u.id === user.id ? { ...u, ...updatedData } : u
+      const updatedUsers = storedUsers.map(u =>
+        u.id === user.id ? {...u, ...updatedData} : u
       )
       localStorage.setItem('sommerhus_users', JSON.stringify(updatedUsers))
     } catch (error) {
