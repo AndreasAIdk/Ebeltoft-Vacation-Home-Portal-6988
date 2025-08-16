@@ -9,6 +9,9 @@ import toast from 'react-hot-toast';
 
 const { FiCamera, FiPlus, FiTrash2, FiUser, FiCalendar, FiImage, FiMaximize2, FiUpload, FiHeart, FiMessageCircle, FiX, FiRefreshCw, FiAtSign } = FiIcons;
 
+// KONSTANT TABELNAVN - gør det nemmere at ændre
+const PHOTOS_TABLE = 'photos_sommerhus_2024_new';
+
 const BulletproofPhotoAlbum = () => {
   const { user } = useAuth();
   const [photos, setPhotos] = useState([]);
@@ -24,6 +27,8 @@ const BulletproofPhotoAlbum = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [mentionSuggestions, setMentionSuggestions] = useState([]);
   const [showMentions, setShowMentions] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   // 🔥 PROPER UUID GENERATION (same as calendar)
   const generateUUID = () => {
@@ -41,10 +46,10 @@ const BulletproofPhotoAlbum = () => {
   const loadFromSupabase = async (showToast = false) => {
     if (showToast) setSyncing(true);
     try {
-      console.log('📡 Loading photos from Supabase MASTER...');
+      console.log(`📡 Loading photos from Supabase table '${PHOTOS_TABLE}'...`);
 
       const { data: supabasePhotos, error } = await supabase
-        .from('photos_sommerhus_2024')
+        .from(PHOTOS_TABLE)
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -121,6 +126,7 @@ const BulletproofPhotoAlbum = () => {
       };
 
       console.log('💾 Saving to Supabase:', finalPhoto.caption, 'with UUID:', finalPhoto.id);
+      console.log('Debug - Using table name:', PHOTOS_TABLE);
 
       const supabaseData = {
         id: finalPhoto.id,
@@ -128,14 +134,16 @@ const BulletproofPhotoAlbum = () => {
         caption: finalPhoto.caption,
         author_name: finalPhoto.author,
         author_id: finalPhoto.authorId,
-        created_at: finalPhoto.date + 'T00:00:00',
-        likes: finalPhoto.likes,
-        comments: finalPhoto.comments,
-        mentioned_users: finalPhoto.mentionedUsers
+        created_at: finalPhoto.createdAt,
+        likes: finalPhoto.likes || [],
+        comments: finalPhoto.comments || [],
+        mentioned_users: finalPhoto.mentionedUsers || []
       };
 
+      console.log('Debug - Data structure being sent:', Object.keys(supabaseData));
+
       const { error } = await supabase
-        .from('photos_sommerhus_2024')
+        .from(PHOTOS_TABLE)
         .insert([supabaseData]);
 
       if (error) {
@@ -161,6 +169,8 @@ const BulletproofPhotoAlbum = () => {
       return false;
     } finally {
       setLoading(false);
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -176,7 +186,7 @@ const BulletproofPhotoAlbum = () => {
       console.log('🗑️ Deleting from Supabase:', id);
 
       const { error } = await supabase
-        .from('photos_sommerhus_2024')
+        .from(PHOTOS_TABLE)
         .delete()
         .eq('id', id);
 
@@ -240,7 +250,7 @@ const BulletproofPhotoAlbum = () => {
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'photos_sommerhus_2024'
+        table: PHOTOS_TABLE
       }, (payload) => {
         console.log('📡 Real-time photo update:', payload.eventType);
         setTimeout(() => loadFromSupabase(), 200);
@@ -282,60 +292,86 @@ const BulletproofPhotoAlbum = () => {
   // Enhanced image compression for mobile compatibility
   const compressImage = (file) => {
     return new Promise((resolve, reject) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
+      setIsUploading(true);
+      setUploadProgress(10);
 
-      img.onload = () => {
-        try {
-          const maxWidth = 1200;
-          const maxHeight = 800;
-          let { width, height } = img;
+      const reader = new FileReader();
+      
+      reader.onload = (event) => {
+        setUploadProgress(30);
+        const img = new Image();
+        
+        img.onload = () => {
+          try {
+            setUploadProgress(50);
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            const maxWidth = 1200;
+            const maxHeight = 800;
+            let { width, height } = img;
 
-          if (width > height) {
-            if (width > maxWidth) {
-              height = (height * maxWidth) / width;
-              width = maxWidth;
+            if (width > height) {
+              if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width = (width * maxHeight) / height;
+                height = maxHeight;
+              }
             }
-          } else {
-            if (height > maxHeight) {
-              width = (width * maxHeight) / height;
-              height = maxHeight;
+
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            setUploadProgress(80);
+
+            let quality = 0.8;
+            let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+
+            while (compressedDataUrl.length > 800000 && quality > 0.3) {
+              quality -= 0.1;
+              compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
             }
+            
+            setUploadProgress(100);
+            resolve(compressedDataUrl);
+          } catch (error) {
+            console.error('Image compression error:', error);
+            reject(error);
           }
+        };
 
-          canvas.width = width;
-          canvas.height = height;
-          ctx.drawImage(img, 0, 0, width, height);
+        img.onerror = (error) => {
+          console.error('Image loading error:', error);
+          reject(new Error('Kunne ikke indlæse billedet'));
+        };
 
-          let quality = 0.8;
-          let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-
-          while (compressedDataUrl.length > 800000 && quality > 0.3) {
-            quality -= 0.1;
-            compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-          }
-
-          resolve(compressedDataUrl);
-        } catch (error) {
-          reject(error);
-        }
+        img.src = event.target.result;
       };
 
-      img.onerror = () => reject(new Error('Kunne ikke indlæse billedet'));
-      img.src = URL.createObjectURL(file);
+      reader.onerror = (error) => {
+        console.error('FileReader error:', error);
+        reject(new Error('Kunne ikke læse billedfilen'));
+      };
+
+      reader.readAsDataURL(file);
     });
   };
 
   // Detect mentions in captions/comments
   const detectMentions = (text) => {
+    if (!text) return [];
+    
     const mentionRegex = /@(\w+)/g;
     const matches = [];
     let match;
 
     while ((match = mentionRegex.exec(text)) !== null) {
       const username = match[1];
-      const foundUser = allUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+      const foundUser = allUsers.find(u => u.username?.toLowerCase() === username.toLowerCase());
       if (foundUser) {
         matches.push(foundUser.id);
       }
@@ -350,8 +386,8 @@ const BulletproofPhotoAlbum = () => {
       const searchTerm = text.substring(lastAtIndex + 1);
       if (searchTerm && !searchTerm.includes(' ')) {
         const filtered = allUsers.filter(u => 
-          u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          u.full_name.toLowerCase().includes(searchTerm.toLowerCase())
+          u.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          u.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
         );
         setMentionSuggestions(filtered);
         setShowMentions(filtered.length > 0);
@@ -379,16 +415,18 @@ const BulletproofPhotoAlbum = () => {
 
   // Render content with mentions highlighted
   const renderContentWithMentions = (content) => {
+    if (!content) return '';
+    
     const parts = content.split(/(@\w+)/g);
     return parts.map((part, index) => {
-      if (part.startsWith('@')) {
+      if (part && part.startsWith('@')) {
         const username = part.substring(1);
-        const mentionedUser = allUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+        const mentionedUser = allUsers.find(u => u.username?.toLowerCase() === username.toLowerCase());
         return (
           <span
             key={index}
             className={`text-ebeltoft-blue font-medium bg-blue-50 px-1 rounded ${
-              mentionedUser?.id === user.id ? 'bg-yellow-100 text-yellow-800' : ''
+              mentionedUser?.id === user?.id ? 'bg-yellow-100 text-yellow-800' : ''
             }`}
           >
             {part}
@@ -400,6 +438,13 @@ const BulletproofPhotoAlbum = () => {
   };
 
   const onDrop = async (acceptedFiles) => {
+    if (!acceptedFiles || acceptedFiles.length === 0) {
+      toast.error('Ingen filer valgt');
+      return;
+    }
+
+    setIsUploading(true);
+    
     for (const file of acceptedFiles) {
       if (file.size > 20 * 1024 * 1024) {
         toast.error('Billedet er for stort. Maksimum 20MB.');
@@ -432,19 +477,18 @@ const BulletproofPhotoAlbum = () => {
         toast.success('Billede uploadet!', { id: `processing-${file.name}` });
       } catch (error) {
         console.error('Image processing error:', error);
-        toast.error('Der opstod en fejl ved behandling af billedet.', { id: `processing-${file.name}` });
+        toast.error(`Der opstod en fejl: ${error.message || 'Ukendt fejl'}`, { id: `processing-${file.name}` });
       }
     }
 
     setNewPhoto({ caption: '' });
     setShowForm(false);
+    setIsUploading(false);
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png', '.gif', '.webp', '.heic', '.heif']
-    },
+    accept: { 'image/*': [] }, // Simplified to accept all image types
     maxSize: 20 * 1024 * 1024,
     multiple: true
   });
@@ -468,6 +512,8 @@ const BulletproofPhotoAlbum = () => {
       await saveToSupabase(photoData);
       setNewPhoto({ caption: '' });
       setShowForm(false);
+    } else {
+      toast.error('Udfyld venligst både billede-URL og beskrivelse');
     }
   };
 
@@ -503,7 +549,7 @@ const BulletproofPhotoAlbum = () => {
     };
 
     const { error } = await supabase
-      .from('photos_sommerhus_2024')
+      .from(PHOTOS_TABLE)
       .update(supabaseData)
       .eq('id', photoId);
 
@@ -511,6 +557,8 @@ const BulletproofPhotoAlbum = () => {
       const updatedPhotos = photos.map(p => p.id === photoId ? updatedPhoto : p);
       setPhotos(updatedPhotos);
       localStorage.setItem('sommerhus_photos_backup', JSON.stringify(updatedPhotos));
+    } else {
+      toast.error(`Fejl ved like: ${error.message}`);
     }
   };
 
@@ -538,7 +586,7 @@ const BulletproofPhotoAlbum = () => {
 
       // Update in Supabase
       const { error } = await supabase
-        .from('photos_sommerhus_2024')
+        .from(PHOTOS_TABLE)
         .update({ comments: updatedPhoto.comments })
         .eq('id', photoId);
 
@@ -555,6 +603,8 @@ const BulletproofPhotoAlbum = () => {
         setNewReply('');
         setReplyingTo(null);
         toast.success('Kommentar tilføjet!');
+      } else {
+        toast.error(`Fejl ved kommentar: ${error.message}`);
       }
     }
   };
@@ -616,7 +666,7 @@ const BulletproofPhotoAlbum = () => {
       <div className={`${backgroundImage ? 'bg-white/95 backdrop-blur-sm' : 'bg-white'} rounded-2xl shadow-lg p-6 mb-6`}>
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-ebeltoft-dark">
-            Fotoalbum (Bulletproof)
+            Fotoalbum
             {loading && <div className="w-4 h-4 border-2 border-ebeltoft-blue border-t-transparent rounded-full animate-spin ml-2 inline-block" />}
           </h2>
           <div className="flex items-center gap-2">
@@ -701,27 +751,46 @@ const BulletproofPhotoAlbum = () => {
               >
                 <input {...getInputProps()} />
                 <div className="space-y-3">
-                  <div className="flex justify-center">
-                    <div className="flex gap-4">
-                      <SafeIcon icon={FiUpload} className="w-12 h-12 text-gray-400" />
-                      <SafeIcon icon={FiCamera} className="w-12 h-12 text-gray-400" />
+                  {isUploading ? (
+                    <div className="space-y-4">
+                      <div className="flex justify-center">
+                        <div className="w-16 h-16 border-4 border-ebeltoft-blue border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                      <div>
+                        <p className="text-lg text-gray-700 font-medium">Uploader billede...</p>
+                        <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+                          <div 
+                            className="bg-ebeltoft-blue h-2.5 rounded-full" 
+                            style={{ width: `${uploadProgress}%` }}
+                          ></div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <p className="text-lg text-gray-700 font-medium">
-                      {isDragActive ? 'Slip billederne her...' : 'Upload billeder'}
-                    </p>
-                    <p className="text-sm text-gray-600 mt-2">
-                      Træk og slip billeder her, eller klik for at vælge
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      📱 Virker også med mobilkamera og fotorulle
-                    </p>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    <p>Understøttede formater: JPG, PNG, GIF, WebP, HEIC</p>
-                    <p>Maksimum størrelse: 20MB per billede</p>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="flex justify-center">
+                        <div className="flex gap-4">
+                          <SafeIcon icon={FiUpload} className="w-12 h-12 text-gray-400" />
+                          <SafeIcon icon={FiCamera} className="w-12 h-12 text-gray-400" />
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-lg text-gray-700 font-medium">
+                          {isDragActive ? 'Slip billederne her...' : 'Upload billeder'}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-2">
+                          Træk og slip billeder her, eller klik for at vælge
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          📱 Virker også med mobilkamera og fotorulle
+                        </p>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        <p>Understøttede formater: JPG, PNG, GIF, WebP, HEIC</p>
+                        <p>Maksimum størrelse: 20MB per billede</p>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -742,6 +811,7 @@ const BulletproofPhotoAlbum = () => {
                   <button
                     type="submit"
                     className="px-6 py-2 bg-ebeltoft-blue text-white rounded-lg hover:bg-ebeltoft-dark transition-colors"
+                    disabled={loading || isUploading}
                   >
                     Tilføj fra URL
                   </button>
@@ -749,6 +819,7 @@ const BulletproofPhotoAlbum = () => {
                     type="button"
                     onClick={() => setShowForm(false)}
                     className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    disabled={loading || isUploading}
                   >
                     Annuller
                   </button>
@@ -758,6 +829,21 @@ const BulletproofPhotoAlbum = () => {
           </motion.div>
         )}
       </div>
+
+      {photos.length === 0 && (
+        <div className="bg-white rounded-xl shadow-md p-8 text-center">
+          <SafeIcon icon={FiImage} className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+          <h3 className="text-xl font-medium text-gray-600 mb-2">Ingen billeder endnu</h3>
+          <p className="text-gray-500 mb-6">Upload det første billede til fotoalbummet</p>
+          <button 
+            onClick={() => setShowForm(true)}
+            className="px-6 py-2 bg-ebeltoft-blue text-white rounded-lg hover:bg-ebeltoft-dark transition-colors inline-flex items-center gap-2"
+          >
+            <SafeIcon icon={FiPlus} className="w-5 h-5" />
+            Upload billede
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {photos.map((photo) => (
@@ -784,7 +870,7 @@ const BulletproofPhotoAlbum = () => {
                   >
                     <SafeIcon icon={FiMaximize2} className="w-4 h-4" />
                   </button>
-                  {(photo.authorId === user.id || user?.isSuperUser) && (
+                  {(photo.authorId === user?.id || user?.isSuperUser) && (
                     <button
                       onClick={() => deleteFromSupabase(photo.id)}
                       className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors text-red-500"
@@ -815,7 +901,7 @@ const BulletproofPhotoAlbum = () => {
                 <button
                   onClick={() => handleLike(photo.id)}
                   className={`flex items-center gap-1 transition-colors ${
-                    (photo.likes || []).includes(user.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                    (photo.likes || []).includes(user?.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
                   }`}
                 >
                   <SafeIcon icon={FiHeart} className="w-4 h-4" />
@@ -843,7 +929,7 @@ const BulletproofPhotoAlbum = () => {
                         <button
                           onClick={() => handleLike(photo.id, true, comment.id)}
                           className={`flex items-center gap-1 text-xs transition-colors ${
-                            (comment.likes || []).includes(user.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                            (comment.likes || []).includes(user?.id) ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
                           }`}
                         >
                           <SafeIcon icon={FiHeart} className="w-3 h-3" />

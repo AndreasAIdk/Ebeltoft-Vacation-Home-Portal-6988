@@ -8,7 +8,7 @@ import MessageWall from './components/MessageWall/MessageWall'
 import Checklist from './components/Checklist/Checklist'
 import SupabaseFirstCalendar from './components/Calendar/SupabaseFirstCalendar'
 import Contacts from './components/Contacts/Contacts'
-import BulletproofPhotoAlbum from './components/PhotoAlbum/BulletproofPhotoAlbum'
+import PhotoAlbum from './components/PhotoAlbum/BulletproofPhotoAlbum'
 import Guides from './components/Guides/Guides'
 import Settings from './components/Settings/Settings'
 import AdminPanel from './components/Admin/AdminPanel'
@@ -72,7 +72,7 @@ const AppContent = () => {
       case 'kontakt':
         return <Contacts />
       case 'fotoalbum':
-        return <BulletproofPhotoAlbum />
+        return <PhotoAlbum />
       case 'guides':
         return <Guides />
       case 'indstillinger':
