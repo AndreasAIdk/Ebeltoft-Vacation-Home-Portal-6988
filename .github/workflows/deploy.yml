@@ -17,8 +17,15 @@ jobs:
           node-version: '18'
           cache: 'npm'
 
+      - name: Generate package-lock.json if needed
+        run: |
+          if [ ! -f "package-lock.json" ] || [ ! -s "package-lock.json" ]; then
+            echo "Creating package-lock.json file"
+            npm install --package-lock-only
+          fi
+
       - name: Install dependencies
-        run: npm install  # Changed from 'npm ci' to 'npm install'
+        run: npm ci || npm install
 
       - name: Build site
         run: npm run build
