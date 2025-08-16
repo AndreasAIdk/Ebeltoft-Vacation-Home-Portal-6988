@@ -13,31 +13,12 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all history for proper versioning
 
-      # Generate a complete package-lock.json file first
-      - name: Create package-lock.json
-        run: |
-          echo '{
-            "name": "sommerhus-i-ebeltoft",
-            "version": "1.1.0",
-            "lockfileVersion": 3,
-            "requires": true,
-            "packages": {
-              "": {
-                "name": "sommerhus-i-ebeltoft",
-                "private": true,
-                "version": "1.1.0",
-                "type": "module"
-              }
-            }
-          }' > package-lock.json
-          cat package-lock.json
-
-      # Now setup Node with caching
+      # Setup Node without caching to avoid dependency on package-lock.json
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          cache: 'npm'
+          # Removing the cache option to avoid dependency on package-lock.json
 
       # Install dependencies properly
       - name: Install dependencies
