@@ -13,36 +13,19 @@ jobs:
         with:
           fetch-depth: 0 # Fetch all history for proper versioning
 
-      # First delete the truncated package-lock.json
-      - name: Remove invalid package-lock.json
-        run: rm -f package-lock.json
-
-      # Setup Node without cache
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          # No cache option to avoid dependency on package-lock.json
 
-      # Generate a fresh, complete package-lock.json
-      - name: Generate fresh package-lock.json
-        run: npm install --package-lock-only
-
-      # Check if package-lock.json was created correctly
-      - name: Verify package-lock.json
-        run: |
-          if [ -f package-lock.json ]; then
-            echo "package-lock.json created successfully"
-            ls -la package-lock.json
-          else
-            echo "Failed to create package-lock.json"
-            exit 1
-          fi
-
-      # Install dependencies properly
       - name: Install dependencies
-        run: npm ci || npm install
+        run: |
+          # Remove the potentially truncated package-lock.json
+          rm -f package-lock.json
+          # Install dependencies
+          npm install
 
-      # Build the site
       - name: Build site
         run: npm run build
         env:
