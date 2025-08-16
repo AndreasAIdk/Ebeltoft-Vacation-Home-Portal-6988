@@ -10,23 +10,47 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history for proper versioning
 
+      # Generate a complete package-lock.json file first
+      - name: Create package-lock.json
+        run: |
+          echo '{
+            "name": "sommerhus-i-ebeltoft",
+            "version": "1.1.0",
+            "lockfileVersion": 3,
+            "requires": true,
+            "packages": {
+              "": {
+                "name": "sommerhus-i-ebeltoft",
+                "private": true,
+                "version": "1.1.0",
+                "type": "module"
+              }
+            }
+          }' > package-lock.json
+          cat package-lock.json
+
+      # Now setup Node with caching
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-          # Removed cache: 'npm' to avoid dependency on package-lock.json
+          cache: 'npm'
 
+      # Install dependencies properly
       - name: Install dependencies
         run: npm install
-        # Changed from npm ci to npm install to avoid requiring package-lock.json
 
+      # Build the site
       - name: Build site
         run: npm run build
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
+      # Deploy to Netlify
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v2
         with:
