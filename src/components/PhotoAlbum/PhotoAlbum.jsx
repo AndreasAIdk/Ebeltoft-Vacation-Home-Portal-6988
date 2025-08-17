@@ -488,7 +488,14 @@ const PhotoAlbum = () => {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'image/*': [] }, // Simplified to accept all image types
+    accept: { 
+      'image/jpeg': ['.jpg', '.jpeg', '.JPG', '.JPEG'],
+      'image/png': ['.png', '.PNG'],
+      'image/gif': ['.gif', '.GIF'],
+      'image/webp': ['.webp', '.WEBP'],
+      'image/heic': ['.heic', '.HEIC'],
+      'image/heif': ['.heif', '.HEIF']
+    },
     maxSize: 20 * 1024 * 1024,
     multiple: true
   });
@@ -786,7 +793,7 @@ const PhotoAlbum = () => {
                         </p>
                       </div>
                       <div className="text-xs text-gray-500">
-                        <p>Understøttede formater: JPG, PNG, GIF, WebP, HEIC</p>
+                        <p>Understøttede formater: JPG, JPEG, PNG, GIF, WebP, HEIC, HEIF</p>
                         <p>Maksimum størrelse: 20MB per billede</p>
                       </div>
                     </>

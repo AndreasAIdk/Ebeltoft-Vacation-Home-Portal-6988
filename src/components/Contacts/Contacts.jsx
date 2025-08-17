@@ -283,7 +283,7 @@ const Contacts = () => {
       <div className={`${backgroundImage ? 'bg-white/95 backdrop-blur-sm' : 'bg-white'} rounded-2xl shadow-lg p-6 mb-6`}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-ebeltoft-dark">Familie kontakter</h2>
+            <h2 className="text-2xl font-bold text-ebeltoft-dark">Kontakter</h2>
             {!user?.isSuperUser && (
               <p className="text-sm text-gray-500 mt-1">
                 📖 Kun visning - Kontakt en superbruger for at tilføje/redigere
